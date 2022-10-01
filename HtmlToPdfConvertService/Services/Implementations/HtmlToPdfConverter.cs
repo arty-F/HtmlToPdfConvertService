@@ -10,8 +10,22 @@ namespace HtmlToPdfConvertService.Services.Implementations
         private const string RESULT_EXTENSION = ".pdf";
         private const string CONVERTED_FILE_TYPE = "application/pdf";
 
+        private readonly IFileProvider fileProvider;
+
+        public HtmlToPdfConverter(IFileProvider fileProvider)
+        {
+            this.fileProvider = fileProvider;
+        }
+
         public async Task<byte[]> Convert(IFormFile fileForm)
         {
+            var file = await fileProvider.GetAsync(fileForm);
+            if (file != null)
+            {
+                return file.Data;
+            }
+            
+            await fileProvider.CreateAsync(fileForm);
             return await GetBytes(fileForm);
         }
 

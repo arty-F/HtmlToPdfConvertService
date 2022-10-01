@@ -1,3 +1,4 @@
+using HtmlToPdfConvertService.Models;
 using HtmlToPdfConvertService.Services.Implementations;
 using HtmlToPdfConvertService.Services.Interfaces;
 
@@ -5,7 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<FilesDatabaseSettings>(
+    builder.Configuration.GetSection("PdfFilesDatabase"));
 builder.Services.AddTransient<IFileConverter, HtmlToPdfConverter>();
+builder.Services.AddSingleton<IFileProvider, MongoFileProvider>();
 
 var app = builder.Build();
 
