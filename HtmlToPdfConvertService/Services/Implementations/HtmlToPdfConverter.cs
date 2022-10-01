@@ -1,5 +1,6 @@
 ﻿using HtmlToPdfConvertService.Services.Interfaces;
 using PuppeteerSharp;
+using System.Text;
 
 namespace HtmlToPdfConvertService.Services.Implementations
 {
@@ -35,8 +36,15 @@ namespace HtmlToPdfConvertService.Services.Implementations
             await browserFetcher.DownloadAsync();
             await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
             await using var page = await browser.NewPageAsync();
-            await page.SetContentAsync("<div>My Receipt</div>");
-            var result = await page.PdfDataAsync();
+
+            var fileData = new StringBuilder();
+            using var reader = new StreamReader(fileForm.OpenReadStream());
+            while (reader.Peek() >= 0)
+            {
+                fileData.AppendLine(reader.ReadLine());
+            }
+                
+            await page.SetContentAsync(fileData.ToString());
             return await page.PdfDataAsync();
         }
     }

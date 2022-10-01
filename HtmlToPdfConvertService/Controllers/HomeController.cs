@@ -29,8 +29,8 @@ namespace HtmlToPdfConvertService.Controllers
 
             return File(
                 await fileConverter.Convert(file),
-                fileConverter.GetConvertedFileName(file),
-                fileConverter.GetConvertedFileType());
+                fileConverter.GetConvertedFileType(),
+                fileConverter.GetConvertedFileName(file));
         }
 
         public IActionResult Error()
