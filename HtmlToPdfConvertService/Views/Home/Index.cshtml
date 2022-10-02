@@ -1,5 +1,13 @@
 ﻿@using (Html.BeginForm("Index", "Home", FormMethod.Post, new { enctype = "multipart/form-data" }))
 {
     <input type="file" name="file" accept=".html" />
-    <input type="submit" value="OK" />
+    <input type="submit" value="OK" onclick="DisplayProgressMessage();" />
+    <p id="loading" style="display: none">Loading...</p>
 }
+
+<script>
+    function DisplayProgressMessage() {
+        const element = document.getElementById("loading");
+        element.style.display = "block";
+    }
+</script>
