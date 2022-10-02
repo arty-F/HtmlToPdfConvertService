@@ -22,11 +22,12 @@ namespace HtmlToPdfConvertService.Services.Implementations
             var file = await fileProvider.GetAsync(fileForm);
             if (file != null)
             {
-                return file.Data;
+                return file.ConvertedData;
             }
-            
-            await fileProvider.CreateAsync(fileForm);
-            return await GetBytes(fileForm);
+
+            var convertedData = await GetBytes(fileForm);
+            await fileProvider.CreateAsync(fileForm, convertedData);
+            return convertedData;
         }
 
         public bool IsSupportedExtension(IFormFile fileForm)

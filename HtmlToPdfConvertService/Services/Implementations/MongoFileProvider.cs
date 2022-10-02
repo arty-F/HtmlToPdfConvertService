@@ -9,43 +9,35 @@ namespace HtmlToPdfConvertService.Services.Implementations
 {
     public class MongoFileProvider : IFileProvider
     {
-        private readonly GridFSBucket bucket;
+        private readonly IMongoCollection<FileModel> filesCollection;
 
         public MongoFileProvider(IOptions<FilesDatabaseSettings> filesDatabaseSettings)
         {
             var mongoClient = new MongoClient(filesDatabaseSettings.Value.ConnectionString);
             var mongoDatabase = mongoClient.GetDatabase(filesDatabaseSettings.Value.DatabaseName);
-            bucket = new GridFSBucket(mongoDatabase);
-        }
-
-        public async Task CreateAsync(IFormFile fileForm)
-        {
-            await bucket.UploadFromStreamAsync(fileForm.FileName, fileForm.OpenReadStream());
+            filesCollection = mongoDatabase.GetCollection<FileModel>(filesDatabaseSettings.Value.CollectionName);
         }
 
         public async Task<FileModel?> GetAsync(IFormFile fileForm)
         {
-            var fileInfo = await Find(fileForm);
-            if (fileInfo == null)
-            {
-                return null;
-            }
-            var bytes = await bucket.DownloadAsBytesAsync(fileInfo.Id);
-            return new FileModel() { Data = bytes };
+            var md5 = await GetFileMD5Async(fileForm);
+            return await filesCollection
+                .Find(f => f.Name == fileForm.FileName && f.Md5 == md5)
+                .FirstOrDefaultAsync();
         }
 
-        private async Task<GridFSFileInfo?> Find(IFormFile fileForm)
+        public async Task CreateAsync(IFormFile fileForm, byte[] convertedData)
         {
-            var md5 = await GetFileMD5(fileForm);
-            var filter = Builders<GridFSFileInfo>.Filter.And(
-                Builders<GridFSFileInfo>.Filter.Eq(x => x.Filename, fileForm.FileName),
-                Builders<GridFSFileInfo>.Filter.Eq(x => x.MD5, md5));
-
-            using var cursor = await bucket.FindAsync(filter, new GridFSFindOptions { Limit = 1 });
-            return (await cursor.ToListAsync()).FirstOrDefault();
+            var newFile = new FileModel
+            {
+                Name = fileForm.FileName,
+                Md5 = await GetFileMD5Async(fileForm),
+                ConvertedData = convertedData
+            };
+            await filesCollection.InsertOneAsync(newFile);
         }
 
-        private async Task<string> GetFileMD5(IFormFile fileForm)
+        private async Task<string> GetFileMD5Async(IFormFile fileForm)
         {
             using var md5 = MD5.Create();
             var bytes = await Task.Run(() => md5.ComputeHash(fileForm.OpenReadStream()));
