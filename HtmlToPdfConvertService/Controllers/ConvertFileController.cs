@@ -5,11 +5,11 @@ using System.Diagnostics;
 
 namespace HtmlToPdfConvertService.Controllers
 {
-    public class HomeController : Controller
+    public class ConvertFileController : Controller
     {
         private readonly IFileConverter fileConverter;
 
-        public HomeController(IFileConverter fileConverter)
+        public ConvertFileController(IFileConverter fileConverter)
         {
             this.fileConverter = fileConverter;
         }
